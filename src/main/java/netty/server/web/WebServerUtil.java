@@ -1,0 +1,91 @@
+package netty.server.web;
+
+import static io.netty.handler.codec.http.HttpResponseStatus.*;
+import static io.netty.handler.codec.http.HttpVersion.*;
+import io.netty.buffer.*;
+import io.netty.channel.*;
+import io.netty.handler.codec.http.*;
+import io.netty.util.*;
+import io.netty.util.internal.*;
+
+import java.io.*;
+import java.net.*;
+import java.text.*;
+import java.util.*;
+import java.util.regex.*;
+
+import javax.activation.*;
+
+public class WebServerUtil {
+
+	public static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
+	private static final int HTTP_CACHE_SECONDS = 60;
+
+	private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
+
+	public static String sanitizeUri(String uri) {
+		try {
+			uri = URLDecoder.decode(uri, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new Error(e);
+		}
+
+		if (uri.isEmpty() || uri.charAt(0) != '/') {
+			return null;
+		}
+		
+		uri = uri.replace('/', File.separatorChar);
+		
+		if (uri.contains(File.separator + '.') || uri.contains('.' + File.separator) || uri.charAt(0) == '.'
+				|| uri.charAt(uri.length() - 1) == '.' || INSECURE_URI.matcher(uri).matches()) {
+			return null;
+		}
+		
+		return SystemPropertyUtil.get("user.dir") + File.separator + uri;
+	}
+
+	public static void sendRedirect(ChannelHandlerContext ctx, String newUri) {
+		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, FOUND);
+		response.headers().set(HttpHeaderNames.LOCATION, newUri);
+		
+		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+	}
+
+	public static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
+		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.copiedBuffer("Failure: " + status + "\r\n", CharsetUtil.UTF_8));
+		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
+		
+		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+	}
+	
+	public static void sendNotModified(ChannelHandlerContext ctx) {
+		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, NOT_MODIFIED);
+		setDateHeader(response);
+		
+		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+	}
+	
+	public static void setDateHeader(FullHttpResponse response) {
+		SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.CHINA);
+
+		Calendar time = new GregorianCalendar();
+		response.headers().set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
+	}
+	
+	public static void setDateAndCacheHeaders(HttpResponse response, File fileToCache) {
+		SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.CHINA);
+		
+		Calendar time = new GregorianCalendar();
+		response.headers().set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
+		
+		time.add(Calendar.SECOND, HTTP_CACHE_SECONDS);
+		response.headers().set(HttpHeaderNames.EXPIRES, dateFormatter.format(time.getTime()));
+		response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, max-age=" + HTTP_CACHE_SECONDS);
+		response.headers().set(HttpHeaderNames.LAST_MODIFIED, dateFormatter.format(new Date(fileToCache.lastModified())));
+	}
+	
+	public static void setContentTypeHeader(HttpResponse response, File file) {
+		MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
+		response.headers().set(HttpHeaderNames.CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
+	}
+}

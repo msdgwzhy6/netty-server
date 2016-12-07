@@ -26,7 +26,7 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>file-server</finalName>
+		<finalName>netty-server</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/java</directory>
