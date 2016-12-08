@@ -22,6 +22,7 @@ public class WebServerUtil {
 	private static final int HTTP_CACHE_SECONDS = 60;
 
 	private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
+	private static final SimpleDateFormat FMT = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.CHINA);
 
 	public static String sanitizeUri(String uri) {
 		try {
@@ -43,14 +44,20 @@ public class WebServerUtil {
 		
 		return SystemPropertyUtil.get("user.dir") + File.separator + uri;
 	}
-
+	
+	/**
+	 * 重定向
+	 */
 	public static void sendRedirect(ChannelHandlerContext ctx, String newUri) {
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, FOUND);
 		response.headers().set(HttpHeaderNames.LOCATION, newUri);
 		
 		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 	}
-
+	
+	/**
+	 * 转向错误页
+	 */
 	public static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.copiedBuffer("Failure: " + status + "\r\n", CharsetUtil.UTF_8));
 		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
@@ -60,28 +67,22 @@ public class WebServerUtil {
 	
 	public static void sendNotModified(ChannelHandlerContext ctx) {
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, NOT_MODIFIED);
-		setDateHeader(response);
+		
+		Calendar time = new GregorianCalendar();
+		response.headers().set(HttpHeaderNames.DATE, FMT.format(time.getTime()));
 		
 		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 	}
 	
-	public static void setDateHeader(FullHttpResponse response) {
-		SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.CHINA);
-
-		Calendar time = new GregorianCalendar();
-		response.headers().set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
-	}
-	
 	public static void setDateAndCacheHeaders(HttpResponse response, File fileToCache) {
-		SimpleDateFormat dateFormatter = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.CHINA);
-		
 		Calendar time = new GregorianCalendar();
-		response.headers().set(HttpHeaderNames.DATE, dateFormatter.format(time.getTime()));
-		
 		time.add(Calendar.SECOND, HTTP_CACHE_SECONDS);
-		response.headers().set(HttpHeaderNames.EXPIRES, dateFormatter.format(time.getTime()));
-		response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, max-age=" + HTTP_CACHE_SECONDS);
-		response.headers().set(HttpHeaderNames.LAST_MODIFIED, dateFormatter.format(new Date(fileToCache.lastModified())));
+		
+		response.headers()
+			.set(HttpHeaderNames.DATE, FMT.format(time.getTime()))
+			.set(HttpHeaderNames.EXPIRES, FMT.format(time.getTime()))
+			.set(HttpHeaderNames.CACHE_CONTROL, "private, max-age=" + HTTP_CACHE_SECONDS)
+			.set(HttpHeaderNames.LAST_MODIFIED, FMT.format(new Date(fileToCache.lastModified())));
 	}
 	
 	public static void setContentTypeHeader(HttpResponse response, File file) {
