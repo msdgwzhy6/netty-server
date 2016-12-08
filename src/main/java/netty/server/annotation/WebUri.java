@@ -1,11 +1,11 @@
-package netty.server.web;
+package netty.server.annotation;
 
 import java.lang.annotation.*;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited //可继承
-public @interface WebServerUri {
+public @interface WebUri {
 	
 	String value() default "";
 }

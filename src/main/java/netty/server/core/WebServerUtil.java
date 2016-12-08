@@ -1,4 +1,4 @@
-package netty.server.web;
+package netty.server.core;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
@@ -88,5 +88,21 @@ public class WebServerUtil {
 	public static void setContentTypeHeader(HttpResponse response, File file) {
 		MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
 		response.headers().set(HttpHeaderNames.CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
+	}
+
+	public static String listToString(List<String> list) {
+		if (list == null || list.size() == 0)
+			return null;
+
+		if (list.size() == 1)
+			return list.get(0);
+
+		StringBuffer result = new StringBuffer();
+		for (int i = 0; i < list.size(); i++) {
+			if (i != 0)
+				result.append(",");
+			result.append(list.get(i));
+		}
+		return result.toString();
 	}
 }

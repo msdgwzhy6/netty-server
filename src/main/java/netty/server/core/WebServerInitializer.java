@@ -1,4 +1,4 @@
-package netty.server.web;
+package netty.server.core;
 
 import io.netty.channel.*;
 import io.netty.channel.socket.*;

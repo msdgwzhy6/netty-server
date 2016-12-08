@@ -1,4 +1,4 @@
-package netty.server.web;
+package netty.server.core;
 
 import java.io.*;
 import java.net.*;
@@ -9,7 +9,7 @@ import java.util.jar.*;
  * 扫描指定包下所有类
  */
 public class WebServerScanner {
-
+	
 	private String basePackage;
 	private ClassLoader cl;
 

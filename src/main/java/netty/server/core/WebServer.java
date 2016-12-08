@@ -1,4 +1,4 @@
-package netty.server.web;
+package netty.server.core;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -9,13 +9,15 @@ import io.netty.channel.nio.*;
 import io.netty.channel.socket.nio.*;
 import io.netty.handler.logging.*;
 
+import netty.server.annotation.*;
+
 /**
  * 基于Netty的Web服务器
  */
 public final class WebServer {
 	
-	private static final String BASE_PACKAGE = "netty.server.web.controller";
-	public static final Map<String, Method> URL_MAPPING = new HashMap<String, Method>();
+	private static final String BASE_PACKAGE = "netty.server.web";
+	public static final Map<String, WebServerMapping> URL_MAPPING = new HashMap<String, WebServerMapping>();
 	
 	public static void run(int port) throws Exception {
 		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -45,7 +47,7 @@ public final class WebServer {
 
 		for (String className : list) {
 			Class<?> clazz = scan.forClassName(className);
-			WebServerUri uri = clazz.getAnnotation(WebServerUri.class);
+			WebUri uri = clazz.getAnnotation(WebUri.class);
 			
 			if (uri == null)
 				continue;
@@ -53,14 +55,14 @@ public final class WebServer {
 			Method[] methods = clazz.getMethods();
 
 			for (Method method : methods) {
-				WebServerUri second = method.getAnnotation(WebServerUri.class);
+				WebUri second = method.getAnnotation(WebUri.class);
 
 				if (second == null)
 					continue;
 				
 				System.out.println("拦截路径：" + uri.value() + second.value());
 				
-				URL_MAPPING.put(uri.value() + second.value(), method);
+				URL_MAPPING.put(uri.value() + second.value(), new WebServerMapping(clazz, method));
 			}
 		}
 	}
