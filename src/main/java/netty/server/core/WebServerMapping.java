@@ -18,18 +18,17 @@ public class WebServerMapping {
 
 	public Class<?> clazz;
 	public Method method;
+	public String[] names;
 
 	public WebServerMapping() {
 		super();
 	}
 
-	public WebServerMapping(Class<?> clazz, Method method) {
+	public WebServerMapping(Class<?> clazz, Method method) throws Exception {
 		this.clazz = clazz;
 		this.method = method;
-	}
-	
-	public String[] getParamsName() throws Exception{
-		// 使用增强反射工具，还原出参数名
+		
+		// 使用增强反射工具，还原出参数名，在服务器启动时预处理，可以提升运行时速度
 		ClassPool cp = ClassPool.getDefault();
 		cp.insertClassPath(new ClassClassPath(clazz));
 		CtClass cc = cp.get(clazz.getName());
@@ -39,13 +38,12 @@ public class WebServerMapping {
 		CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
 		LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
 		
-		String[] result = new String[method.getParameterTypes().length];
+		names = new String[method.getParameterTypes().length];
 
 		if (attr != null) {
 			int pos = Modifier.isStatic(cm.getModifiers()) ? 0 : 1;
-			for (int i = 0; i < result.length; i++)
-				result[i] = attr.variableName(i + pos);
+			for (int i = 0; i < names.length; i++)
+				names[i] = attr.variableName(i + pos);
 		}
-		return result;
 	}
 }

@@ -60,7 +60,7 @@ public final class WebServer {
 				if (second == null)
 					continue;
 				
-				System.out.println("拦截路径：" + uri.value() + second.value());
+				System.out.println("加载路径：" + uri.value() + second.value());
 				
 				URL_MAPPING.put(uri.value() + second.value(), new WebServerMapping(clazz, method));
 			}

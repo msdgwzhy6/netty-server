@@ -28,7 +28,6 @@ public class WebServerAnalysis {
 			return false;
 
 		// 分析入参
-		String[] paramsName = mapping.getParamsName();
 		Class<?>[] params = mapping.method.getParameterTypes();
 		Object[] args = new Object[params.length];
 
@@ -37,10 +36,20 @@ public class WebServerAnalysis {
 			if (className.equals("io.netty.channel.ChannelHandlerContext")) {
 				// 如果参数类型是ChannelHandlerContext
 				args[i] = ctx;
+			} else if (className.equals("io.netty.handler.codec.http.FullHttpRequest")
+					|| className.equals("io.netty.handler.codec.http.HttpRequest")
+					|| className.equals("io.netty.handler.codec.http.HttpMessage")
+					|| className.equals("io.netty.handler.codec.http.HttpObject")) {
+				// 如果参数类型是FullHttpRequest
+				args[i] = request;
 			} else if (className.equals("java.lang.String")) {
 				// 如果参数类型是String
-				List<String> list = query_param.get(paramsName[i]);
+				List<String> list = query_param.get(mapping.names[i]);
 				args[i] = WebServerUtil.listToString(list);
+			} else if (className.equals("java.io.File")) {
+				// 如果参数类型是File
+				// 参考http://netty.io/4.1/xref/io/netty/example/http/upload/package-summary.html
+				args[i] = null;
 			} else {
 				args[i] = null;
 			}
