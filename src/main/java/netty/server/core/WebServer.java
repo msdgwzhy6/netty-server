@@ -12,7 +12,7 @@ import io.netty.handler.logging.*;
 import netty.server.annotation.*;
 
 /**
- * 基于Netty的Web服务器
+ * Web服务启动类
  */
 public final class WebServer {
 	

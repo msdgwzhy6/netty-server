@@ -1,5 +1,7 @@
 package netty.server.web;
 
+import java.io.*;
+
 import io.netty.channel.*;
 import netty.server.annotation.*;
 
@@ -12,7 +14,7 @@ public class Demo {
 	}
 	
 	@WebUri("/upload")
-	public String upload(ChannelHandlerContext ctx, String name){
+	public String upload(ChannelHandlerContext ctx, String name, File file){
 		System.out.println(name);
 		return "aaaa";
 	}

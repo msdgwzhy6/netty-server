@@ -16,6 +16,9 @@ import java.util.regex.*;
 
 import javax.activation.*;
 
+/**
+ * Web服务工具类
+ */
 public class WebServerUtil {
 
 	public static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";

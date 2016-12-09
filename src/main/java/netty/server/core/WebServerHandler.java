@@ -6,17 +6,15 @@ import io.netty.handler.codec.http.*;
 import io.netty.util.*;
 
 import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
 import java.util.regex.*;
 
-import javassist.*;
-import javassist.Modifier;
-import javassist.bytecode.*;
 import static io.netty.handler.codec.http.HttpMethod.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
+/**
+ * Http请求统一处理
+ */
 public class WebServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 	
 	private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");
@@ -27,111 +25,15 @@ public class WebServerHandler extends SimpleChannelInboundHandler<FullHttpReques
 			return;
 		}
 
-		if (request.method() != GET) {
-			WebServerUtil.sendError(ctx, METHOD_NOT_ALLOWED);
+//		if (request.method() != GET) {
+//			WebServerUtil.sendError(ctx, METHOD_NOT_ALLOWED);
+//			return;
+//		}
+		
+		//解析url，如果配置了并成功执行就不再执行后续操作
+		if (WebServerAnalysis.analysis(ctx, request)){
 			return;
 		}
-		
-		final String uri = request.uri();
-		final String path = WebServerUtil.sanitizeUri(uri);
-		if (path == null) {
-			WebServerUtil.sendError(ctx, FORBIDDEN);
-			return;
-		}
-
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
-		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
-		
-		// 解析uri
-		QueryStringDecoder decoder = new QueryStringDecoder(uri);
-		Map<String, List<String>> query_param = decoder.parameters();
-		// 去url映射中匹配
-		WebServerMapping mapping = WebServer.URL_MAPPING.get(decoder.path());
-
-		// 如果匹配不到，转发404
-		if (mapping == null) {
-			WebServerUtil.sendError(ctx, NOT_FOUND);
-			return;
-		}
-		
-		// 使用增强反射工具，还原出参数名
-		ClassPool cp = ClassPool.getDefault();
-		cp.insertClassPath(new ClassClassPath(mapping.clazz));
-		CtClass cc = cp.get(mapping.clazz.getName());
-		CtMethod cm = cc.getDeclaredMethod(mapping.method.getName());
-
-		MethodInfo methodInfo = cm.getMethodInfo();
-		CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
-		LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
-
-		// 分析入参
-		Parameter[] params = mapping.method.getParameters();
-		Object[] args = new Object[params.length];
-
-		if (attr != null) {
-			int pos = Modifier.isStatic(cm.getModifiers()) ? 0 : 1;
-
-			for (int i = 0; i < params.length; i++) {
-				String className = params[i].getType().getName();
-				if (className.equals("io.netty.channel.ChannelHandlerContext")) {
-					// 如果参数类型是ChannelHandlerContext
-					args[i] = ctx;
-				} else if (className.equals("java.lang.String")) {
-					// 如果参数类型是String
-					List<String> list = query_param.get(attr.variableName(i + pos));
-					args[i] = WebServerUtil.listToString(list);
-				} else {
-					args[i] = null;
-				}
-			}
-		}
-		
-		ByteBuf buffer = Unpooled.copiedBuffer((String)mapping.method.invoke(mapping.clazz.newInstance(), args), CharsetUtil.UTF_8);
-		response.content().writeBytes(buffer);
-		buffer.release();
-		
-		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-		
-//		File file = new File(path);
-//		if (file.isHidden() || !file.exists()) {
-//			WebServerUtil.sendError(ctx, NOT_FOUND);
-//			return;
-//		}
-//
-//		if (file.isDirectory()) {
-//			if (uri.endsWith("/")) {
-//				sendListing(ctx, file, uri);
-//			} else {
-//				WebServerUtil.sendRedirect(ctx, uri + '/');
-//			}
-//			return;
-//		}
-//
-//		if (!file.isFile()) {
-//			WebServerUtil.sendError(ctx, FORBIDDEN);
-//			return;
-//		}
-//
-//		String ifModifiedSince = (String)request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
-//		if (ifModifiedSince != null && !ifModifiedSince.isEmpty()) {
-//			SimpleDateFormat dateFormatter = new SimpleDateFormat(WebServerUtil.HTTP_DATE_FORMAT, Locale.CHINA);
-//			Date ifModifiedSinceDate = dateFormatter.parse(ifModifiedSince);
-//
-//			long ifModifiedSinceDateSeconds = ifModifiedSinceDate.getTime() / 1000;
-//			long fileLastModifiedSeconds = file.lastModified() / 1000;
-//			if (ifModifiedSinceDateSeconds == fileLastModifiedSeconds) {
-//				WebServerUtil.sendNotModified(ctx);
-//				return;
-//			}
-//		}
-//
-//		RandomAccessFile raf;
-//		try {
-//			raf = new RandomAccessFile(file, "r");
-//		} catch (FileNotFoundException ignore) {
-//			WebServerUtil.sendError(ctx, NOT_FOUND);
-//			return;
-//		}
 //		long fileLength = raf.length();
 //
 //		HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);

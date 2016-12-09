@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.jar.*;
 
 /**
- * 扫描指定包下所有类
+ * 扫描包下所有类
  */
 public class WebServerScanner {
 	
