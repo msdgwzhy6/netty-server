@@ -30,18 +30,24 @@ public class WebServerScanner {
     }
 	
 	public Class<?> forClassName(String name) throws Exception {
-		String splashPath = dotToSplash(basePackage);
+		URLClassLoader loader = null;
+		try {
+			String splashPath = dotToSplash(basePackage);
 
-		URL url = cl.getResource(splashPath);
-		String filePath = getRootPath(url);
+			URL url = cl.getResource(splashPath);
+			String filePath = getRootPath(url);
 
-		if (isJarFile(filePath)) {
-			URL[] urls = new URL[] { url };
-			URLClassLoader loader = new URLClassLoader(urls);
+			if (isJarFile(filePath)) {
+				URL[] urls = new URL[] { url };
+				loader = new URLClassLoader(urls);
 
-			return loader.loadClass(name);
-		} else {
-			return Class.forName(name);
+				return loader.loadClass(name);
+			} else {
+				return Class.forName(name);
+			}
+		} finally {
+			if (loader != null)
+				loader.close();
 		}
 	}
 
@@ -87,13 +93,19 @@ public class WebServerScanner {
 
 		List<String> nameList = new ArrayList<String>();
 
-		JarInputStream jarIn = new JarInputStream(new FileInputStream(jarPath));
-		JarEntry entry = null;
+		JarInputStream jarIn = null;
+		try {
+			jarIn = new JarInputStream(new FileInputStream(jarPath));
+			JarEntry entry = null;
 
-		while ((entry = jarIn.getNextJarEntry()) != null) {
-			String name = entry.getName();
-			if (name.startsWith(splashedPackageName) && isClassFile(name))
-				nameList.add(name);
+			while ((entry = jarIn.getNextJarEntry()) != null) {
+				String name = entry.getName();
+				if (name.startsWith(splashedPackageName) && isClassFile(name))
+					nameList.add(name);
+			}
+		} finally {
+			if (jarIn != null)
+				jarIn.close();
 		}
 
 		return nameList;

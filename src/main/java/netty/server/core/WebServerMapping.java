@@ -2,14 +2,9 @@ package netty.server.core;
 
 import java.lang.reflect.*;
 
-import javassist.ClassClassPath;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
+import javassist.*;
 import javassist.Modifier;
-import javassist.bytecode.CodeAttribute;
-import javassist.bytecode.LocalVariableAttribute;
-import javassist.bytecode.MethodInfo;
+import javassist.bytecode.*;
 
 /**
  * URL映射实体
@@ -19,10 +14,6 @@ public class WebServerMapping {
 	public Class<?> clazz;
 	public Method method;
 	public String[] names;
-
-	public WebServerMapping() {
-		super();
-	}
 
 	public WebServerMapping(Class<?> clazz, Method method) throws Exception {
 		this.clazz = clazz;

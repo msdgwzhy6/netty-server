@@ -26,8 +26,8 @@ public final class WebServer {
 		try {
 			init();
 			
-			ServerBootstrap b = new ServerBootstrap();
-			b.group(bossGroup, workerGroup)
+			ServerBootstrap b = new ServerBootstrap()
+				.group(bossGroup, workerGroup)
 				.channel(NioServerSocketChannel.class)
 				.handler(new LoggingHandler(LogLevel.INFO))
 				.childHandler(new WebServerInitializer());

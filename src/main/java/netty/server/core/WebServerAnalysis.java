@@ -1,12 +1,13 @@
 package netty.server.core;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static io.netty.handler.codec.http.HttpResponseStatus.*;
+import static io.netty.handler.codec.http.HttpVersion.*;
 import io.netty.buffer.*;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.util.*;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -30,7 +31,11 @@ public class WebServerAnalysis {
 		// 分析入参
 		Class<?>[] params = mapping.method.getParameterTypes();
 		Object[] args = new Object[params.length];
-
+		
+		//文件缓存
+		List<File> fileCache = new ArrayList<File>();
+		List<String> pathCache = new ArrayList<String>();
+		
 		for (int i = 0; i < params.length; i++) {
 			String className = params[i].getName();
 			if (className.equals("io.netty.channel.ChannelHandlerContext")) {
@@ -48,8 +53,12 @@ public class WebServerAnalysis {
 				args[i] = WebServerUtil.listToString(list);
 			} else if (className.equals("java.io.File")) {
 				// 如果参数类型是File
-				// 参考http://netty.io/4.1/xref/io/netty/example/http/upload/package-summary.html
-				args[i] = null;
+				File file = WebServerUtil.readFile(ctx, request, mapping.names[i]);
+				if (file != null) {
+					fileCache.add(file);
+					pathCache.add(file.getPath());
+				}
+				args[i] = file;
 			} else {
 				args[i] = null;
 			}
@@ -58,7 +67,12 @@ public class WebServerAnalysis {
 		ByteBuf buffer = Unpooled.copiedBuffer((String) mapping.method.invoke(mapping.clazz.newInstance(), args), CharsetUtil.UTF_8);
 		response.content().writeBytes(buffer);
 		buffer.release();
-
+		
+		// 如果文件没有被转移，清除文件缓存
+		for (int i = 0; i < fileCache.size(); i++) {
+			if (fileCache.get(i).getPath().equals(pathCache.get(i)))
+				fileCache.get(i).delete();
+		}
 		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 		return true;
 	}

@@ -8,7 +8,6 @@ import io.netty.util.*;
 import java.io.*;
 import java.util.regex.*;
 
-import static io.netty.handler.codec.http.HttpMethod.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
@@ -18,8 +17,8 @@ import static io.netty.handler.codec.http.HttpVersion.*;
 public class WebServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 	
 	private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");
-	
-	protected void messageReceived(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+
+	protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
 		if (!request.decoderResult().isSuccess()) {
 			WebServerUtil.sendError(ctx, BAD_REQUEST);
 			return;
@@ -31,9 +30,10 @@ public class WebServerHandler extends SimpleChannelInboundHandler<FullHttpReques
 //		}
 		
 		//解析url，如果配置了并成功执行就不再执行后续操作
-		if (WebServerAnalysis.analysis(ctx, request)){
+		if (WebServerAnalysis.analysis(ctx, request))
 			return;
-		}
+		
+		WebServerUtil.sendError(ctx, NOT_FOUND);
 //		long fileLength = raf.length();
 //
 //		HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
@@ -77,9 +77,8 @@ public class WebServerHandler extends SimpleChannelInboundHandler<FullHttpReques
 
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 		cause.printStackTrace();
-		if (ctx.channel().isActive()) {
+		if (ctx.channel().isActive())
 			WebServerUtil.sendError(ctx, INTERNAL_SERVER_ERROR);
-		}
 	}
 
 	private static void sendListing(ChannelHandlerContext ctx, File dir, String dirPath) {

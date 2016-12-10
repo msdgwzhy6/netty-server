@@ -1,7 +1,6 @@
 package netty.server;
 
-import netty.server.core.WebServer;
-import netty.server.web.*;
+import netty.server.core.*;
 
 public class App {
 

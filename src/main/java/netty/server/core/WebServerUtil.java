@@ -5,6 +5,9 @@ import static io.netty.handler.codec.http.HttpVersion.*;
 import io.netty.buffer.*;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.multipart.*;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder.*;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData.*;
 import io.netty.util.*;
 import io.netty.util.internal.*;
 
@@ -34,16 +37,14 @@ public class WebServerUtil {
 			throw new Error(e);
 		}
 
-		if (uri.isEmpty() || uri.charAt(0) != '/') {
+		if (uri.isEmpty() || uri.charAt(0) != '/')
 			return null;
-		}
 		
 		uri = uri.replace('/', File.separatorChar);
 		
 		if (uri.contains(File.separator + '.') || uri.contains('.' + File.separator) || uri.charAt(0) == '.'
-				|| uri.charAt(uri.length() - 1) == '.' || INSECURE_URI.matcher(uri).matches()) {
+				|| uri.charAt(uri.length() - 1) == '.' || INSECURE_URI.matcher(uri).matches())
 			return null;
-		}
 		
 		return SystemPropertyUtil.get("user.dir") + File.separator + uri;
 	}
@@ -107,5 +108,58 @@ public class WebServerUtil {
 			result.append(list.get(i));
 		}
 		return result.toString();
+	}
+	
+	public static File readFile(ChannelHandlerContext ctx, HttpRequest request, String fileName) throws Exception {
+		HttpDataFactory factory = new DefaultHttpDataFactory(DefaultHttpDataFactory.MINSIZE);
+		HttpContent chunk = (HttpContent) request;
+		HttpPostMultipartRequestDecoder decoder;
+		File file = null;
+
+		try {
+			decoder = new HttpPostMultipartRequestDecoder(factory, request);
+			decoder.offer(chunk);
+		} catch (ErrorDataDecoderException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		InterfaceHttpData data = decoder.getBodyHttpData(fileName);
+		if (data != null)
+			file = writeHttpData(data);
+
+		return file;
+	}
+
+	private static File writeHttpData(InterfaceHttpData data) {
+		if (data.getHttpDataType() != HttpDataType.FileUpload)
+			return null;
+
+		FileUpload fileUpload = (FileUpload) data;
+		if (!fileUpload.isCompleted())
+			return null;
+
+		OutputStream os = null;
+		try {
+			ByteBuf buf = fileUpload.getByteBuf();
+
+			byte[] bytes = new byte[buf.readableBytes()];
+			if (bytes.length == 0)
+				return null;
+
+			File file = new File(SystemPropertyUtil.get("user.dir") + File.separator + UUID.randomUUID());
+			os = new FileOutputStream(file);
+
+			buf.readBytes(bytes);
+			os.write(bytes);
+			return file;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			if (os != null)
+				try { os.close(); } catch (Exception e) { }
+			data.release();
+		}
 	}
 }
