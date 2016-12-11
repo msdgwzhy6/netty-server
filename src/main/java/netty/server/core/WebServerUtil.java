@@ -22,9 +22,9 @@ import javax.activation.*;
 /**
  * Web服务工具类
  */
-public class WebServerUtil {
+class WebServerUtil {
 
-	public static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
+	private static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
 	private static final int HTTP_CACHE_SECONDS = 60;
 
 	private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");

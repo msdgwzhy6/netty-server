@@ -8,9 +8,9 @@ import io.netty.handler.stream.*;
 /**
  * Web服务初始化
  */
-public class WebServerInitializer extends ChannelInitializer<SocketChannel> {
+class WebServerInitializer extends ChannelInitializer<SocketChannel> {
 	
-	public void initChannel(final SocketChannel ch) {
+	protected void initChannel(final SocketChannel ch) {
 		ch.pipeline()
 			.addLast(new HttpServerCodec())
 			.addLast(new HttpObjectAggregator(Integer.MAX_VALUE))

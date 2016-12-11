@@ -13,9 +13,9 @@ import java.util.*;
 /**
  * URL解析类
  */
-public class WebServerAnalysis {
+class WebServerAnalysis {
 
-	public static boolean analysis(final ChannelHandlerContext ctx, final FullHttpRequest request) throws Exception {
+	static boolean analysis(final ChannelHandlerContext ctx, final FullHttpRequest request) throws Exception {
 		final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
 		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
 
@@ -23,7 +23,7 @@ public class WebServerAnalysis {
 		final QueryStringDecoder decoder = new QueryStringDecoder(request.uri());
 		final Map<String, List<String>> query_param = decoder.parameters();
 		// 去url映射中匹配
-		final WebServerMapping mapping = WebServer.URL_MAPPING.get(decoder.path());
+		final WebServerMapping mapping = WebServerMapping.get(request, decoder.path());
 
 		if (mapping == null)
 			return false;
