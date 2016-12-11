@@ -1,15 +1,11 @@
 package netty.server.core;
 
-import io.netty.buffer.*;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
-import io.netty.util.*;
 
-import java.io.*;
 import java.util.regex.*;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
-import static io.netty.handler.codec.http.HttpVersion.*;
 
 /**
  * Http请求统一处理
@@ -18,7 +14,7 @@ public class WebServerHandler extends SimpleChannelInboundHandler<FullHttpReques
 	
 	private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");
 
-	protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+	protected void channelRead0(final ChannelHandlerContext ctx, final FullHttpRequest request) throws Exception {
 		if (!request.decoderResult().isSuccess()) {
 			WebServerUtil.sendError(ctx, BAD_REQUEST);
 			return;
@@ -79,38 +75,5 @@ public class WebServerHandler extends SimpleChannelInboundHandler<FullHttpReques
 		cause.printStackTrace();
 		if (ctx.channel().isActive())
 			WebServerUtil.sendError(ctx, INTERNAL_SERVER_ERROR);
-	}
-
-	private static void sendListing(ChannelHandlerContext ctx, File dir, String dirPath) {
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
-		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
-
-		StringBuilder buf = new StringBuilder()
-				.append("<!DOCTYPE html>\r\n")
-				.append("<html><head><meta charset='utf-8' /><title>")
-				.append("Listing of: ").append(dirPath)
-				.append("</title></head><body>\r\n")
-				.append("<h3>Listing of: ").append(dirPath).append("</h3>\r\n")
-				.append("<ul>").append("<li><a href=\"../\">..</a></li>\r\n");
-
-		for (File f : dir.listFiles()) {
-			if (f.isHidden() || !f.canRead()) {
-				continue;
-			}
-
-			String name = f.getName();
-			if (!ALLOWED_FILE_NAME.matcher(name).matches()) {
-				continue;
-			}
-
-			buf.append("<li><a href=\"").append(name).append("\">").append(name).append("</a></li>\r\n");
-		}
-
-		buf.append("</ul></body></html>\r\n");
-		ByteBuf buffer = Unpooled.copiedBuffer(buf, CharsetUtil.UTF_8);
-		response.content().writeBytes(buffer);
-		buffer.release();
-		
-		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 	}
 }

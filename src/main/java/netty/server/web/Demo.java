@@ -2,7 +2,6 @@ package netty.server.web;
 
 import java.io.*;
 
-import io.netty.channel.*;
 import netty.server.annotation.*;
 
 @WebUri
@@ -14,12 +13,12 @@ public class Demo {
 	}
 	
 	@WebUri("/upload")
-	public String upload(ChannelHandlerContext ctx, File file) throws Exception {
+	public String upload(File file) throws Exception {
 		return file == null ? "未上传文件" : file.getPath();
 	}
 	
 	@WebUri("/download/*")
-	public String download(ChannelHandlerContext ctx){
+	public String download(){
 		return "bbbb";
 	}
 }

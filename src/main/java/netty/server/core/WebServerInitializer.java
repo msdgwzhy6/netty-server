@@ -10,7 +10,7 @@ import io.netty.handler.stream.*;
  */
 public class WebServerInitializer extends ChannelInitializer<SocketChannel> {
 	
-	public void initChannel(SocketChannel ch) {
+	public void initChannel(final SocketChannel ch) {
 		ch.pipeline()
 			.addLast(new HttpServerCodec())
 			.addLast(new HttpObjectAggregator(Integer.MAX_VALUE))

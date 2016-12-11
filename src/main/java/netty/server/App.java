@@ -5,6 +5,7 @@ import netty.server.core.*;
 public class App {
 
 	public static void main(String[] args) throws Exception {
-		WebServer.run(8080); //启动Web服务器
+		String port = WebServerUtil.getProperties("config.properties", "port");
+		WebServer.run(port == null ? 8080 : Integer.valueOf(port)); //启动Web服务器
 	}
 }

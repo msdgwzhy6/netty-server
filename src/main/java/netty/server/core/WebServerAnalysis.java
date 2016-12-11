@@ -15,29 +15,29 @@ import java.util.*;
  */
 public class WebServerAnalysis {
 
-	public static boolean analysis(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
+	public static boolean analysis(final ChannelHandlerContext ctx, final FullHttpRequest request) throws Exception {
+		final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
 		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
 
 		// 解析uri
-		QueryStringDecoder decoder = new QueryStringDecoder(request.uri());
-		Map<String, List<String>> query_param = decoder.parameters();
+		final QueryStringDecoder decoder = new QueryStringDecoder(request.uri());
+		final Map<String, List<String>> query_param = decoder.parameters();
 		// 去url映射中匹配
-		WebServerMapping mapping = WebServer.URL_MAPPING.get(decoder.path());
+		final WebServerMapping mapping = WebServer.URL_MAPPING.get(decoder.path());
 
 		if (mapping == null)
 			return false;
 
 		// 分析入参
-		Class<?>[] params = mapping.method.getParameterTypes();
-		Object[] args = new Object[params.length];
+		final Class<?>[] params = mapping.method.getParameterTypes();
+		final Object[] args = new Object[params.length];
 		
-		//文件缓存
-		List<File> fileCache = new ArrayList<File>();
-		List<String> pathCache = new ArrayList<String>();
+		// 文件缓存
+		final List<File> fileCache = new ArrayList<File>();
+		final List<String> pathCache = new ArrayList<String>();
 		
 		for (int i = 0; i < params.length; i++) {
-			String className = params[i].getName();
+			final String className = params[i].getName();
 			if (className.equals("io.netty.channel.ChannelHandlerContext")) {
 				// 如果参数类型是ChannelHandlerContext
 				args[i] = ctx;
@@ -49,11 +49,11 @@ public class WebServerAnalysis {
 				args[i] = request;
 			} else if (className.equals("java.lang.String")) {
 				// 如果参数类型是String
-				List<String> list = query_param.get(mapping.names[i]);
+				final List<String> list = query_param.get(mapping.names[i]);
 				args[i] = WebServerUtil.listToString(list);
 			} else if (className.equals("java.io.File")) {
 				// 如果参数类型是File
-				File file = WebServerUtil.readFile(ctx, request, mapping.names[i]);
+				final File file = WebServerUtil.readFile(ctx, request, mapping.names[i]);
 				if (file != null) {
 					fileCache.add(file);
 					pathCache.add(file.getPath());
@@ -63,10 +63,22 @@ public class WebServerAnalysis {
 				args[i] = null;
 			}
 		}
+		
+		// 分析出参
+		final Class<?> resultType = mapping.method.getReturnType();
+		final String result;
 
-		ByteBuf buffer = Unpooled.copiedBuffer((String) mapping.method.invoke(mapping.clazz.newInstance(), args), CharsetUtil.UTF_8);
-		response.content().writeBytes(buffer);
-		buffer.release();
+		if (resultType.getName().equals("java.lang.String")) {
+			result = (String) mapping.method.invoke(mapping.clazz.newInstance(), args);
+		} else {
+			result = null;
+		}
+
+		if (result != null) {
+			final ByteBuf buffer = Unpooled.copiedBuffer(result, CharsetUtil.UTF_8);
+			response.content().writeBytes(buffer);
+			buffer.release();
+		}
 		
 		// 如果文件没有被转移，清除文件缓存
 		for (int i = 0; i < fileCache.size(); i++) {

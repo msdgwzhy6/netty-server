@@ -11,23 +11,23 @@ import javassist.bytecode.*;
  */
 public class WebServerMapping {
 
-	public Class<?> clazz;
-	public Method method;
-	public String[] names;
+	public final Class<?> clazz;
+	public final Method method;
+	public final String[] names;
 
-	public WebServerMapping(Class<?> clazz, Method method) throws Exception {
+	public WebServerMapping(final Class<?> clazz, final Method method) throws Exception {
 		this.clazz = clazz;
 		this.method = method;
 		
 		// 使用增强反射工具，还原出参数名，在服务器启动时预处理，可以提升运行时速度
-		ClassPool cp = ClassPool.getDefault();
+		final ClassPool cp = ClassPool.getDefault();
 		cp.insertClassPath(new ClassClassPath(clazz));
-		CtClass cc = cp.get(clazz.getName());
-		CtMethod cm = cc.getDeclaredMethod(method.getName());
+		final CtClass cc = cp.get(clazz.getName());
+		final CtMethod cm = cc.getDeclaredMethod(method.getName());
 
-		MethodInfo methodInfo = cm.getMethodInfo();
-		CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
-		LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
+		final MethodInfo methodInfo = cm.getMethodInfo();
+		final CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
+		final LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
 		
 		names = new String[method.getParameterTypes().length];
 

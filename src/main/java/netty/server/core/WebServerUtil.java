@@ -93,6 +93,17 @@ public class WebServerUtil {
 		MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
 		response.headers().set(HttpHeaderNames.CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
 	}
+	
+	public static String getProperties(String source, String key){
+		try {
+			Properties prop = new Properties();
+			prop.load(WebServerUtil.class.getClassLoader().getResourceAsStream(source));
+			return prop.getProperty(key);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	public static String listToString(List<String> list) {
 		if (list == null || list.size() == 0)

@@ -16,7 +16,7 @@ import netty.server.annotation.*;
  */
 public final class WebServer {
 	
-	private static final String BASE_PACKAGE = "netty.server.web";
+	private static final String BASE_PACKAGE = WebServerUtil.getProperties("config.properties", "basePackage");
 	public static final Map<String, WebServerMapping> URL_MAPPING = new HashMap<String, WebServerMapping>();
 	
 	public static void run(int port) throws Exception {

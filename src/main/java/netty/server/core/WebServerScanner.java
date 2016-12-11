@@ -10,8 +10,8 @@ import java.util.jar.*;
  */
 public class WebServerScanner {
 	
-	private String basePackage;
-	private ClassLoader cl;
+	private final String basePackage;
+	private final ClassLoader cl;
 
 	public WebServerScanner(String basePackage) {
 		this.basePackage = basePackage;
@@ -29,13 +29,13 @@ public class WebServerScanner {
         return doScan(basePackage, new ArrayList<String>());
     }
 	
-	public Class<?> forClassName(String name) throws Exception {
+	public Class<?> forClassName(final String name) throws Exception {
 		URLClassLoader loader = null;
 		try {
-			String splashPath = dotToSplash(basePackage);
+			final String splashPath = dotToSplash(basePackage);
 
-			URL url = cl.getResource(splashPath);
-			String filePath = getRootPath(url);
+			final URL url = cl.getResource(splashPath);
+			final String filePath = getRootPath(url);
 
 			if (isJarFile(filePath)) {
 				URL[] urls = new URL[] { url };
@@ -51,13 +51,13 @@ public class WebServerScanner {
 		}
 	}
 
-	private List<String> doScan(String basePackage, List<String> nameList) throws IOException {
-		String splashPath = dotToSplash(basePackage);
+	private List<String> doScan(final String basePackage, final List<String> nameList) throws IOException {
+		final String splashPath = dotToSplash(basePackage);
 
-		URL url = cl.getResource(splashPath);
-		String filePath = getRootPath(url);
+		final URL url = cl.getResource(splashPath);
+		final String filePath = getRootPath(url);
 
-		List<String> names = null;
+		final List<String> names;
 		if (isJarFile(filePath)) {
 			System.out.println(filePath + "是一个JAR包");
 
@@ -68,30 +68,30 @@ public class WebServerScanner {
 			names = readFromDirectory(filePath);
 		}
 		
-		for (String name : names)
+		for (final String name : names)
 			if (isClassFile(name))
 				nameList.add(isJarFile(filePath) ? splashToDot(name) : toFullyQualifiedName(name, basePackage));
 			else
 				doScan(basePackage + "." + name, nameList);
 
-		for (String n : nameList)
+		for (final String n : nameList)
 			System.out.println("找到" + n);
 
 		return nameList;
 	}
 	
-	private String toFullyQualifiedName(String shortName, String basePackage) {
-		StringBuilder sb = new StringBuilder(basePackage);
+	private String toFullyQualifiedName(final String shortName, final String basePackage) {
+		final StringBuilder sb = new StringBuilder(basePackage);
 		sb.append('.');
 		sb.append(trimExtension(shortName));
 
 		return sb.toString();
 	}
 
-	private List<String> readFromJarFile(String jarPath, String splashedPackageName) throws IOException {
+	private List<String> readFromJarFile(final String jarPath, final String splashedPackageName) throws IOException {
 		System.out.println("从JAR包中读取类:" + jarPath);
 
-		List<String> nameList = new ArrayList<String>();
+		final List<String> nameList = new ArrayList<String>();
 
 		JarInputStream jarIn = null;
 		try {
@@ -99,7 +99,7 @@ public class WebServerScanner {
 			JarEntry entry = null;
 
 			while ((entry = jarIn.getNextJarEntry()) != null) {
-				String name = entry.getName();
+				final String name = entry.getName();
 				if (name.startsWith(splashedPackageName) && isClassFile(name))
 					nameList.add(name);
 			}
@@ -111,38 +111,38 @@ public class WebServerScanner {
 		return nameList;
 	}
 
-	private List<String> readFromDirectory(String path) {
-		File file = new File(path);
-		String[] names = file.list();
+	private List<String> readFromDirectory(final String path) {
+		final File file = new File(path);
+		final String[] names = file.list();
 
 		return null == names ? null : Arrays.asList(names);
 	}
 
-	private boolean isClassFile(String name) {
+	private boolean isClassFile(final String name) {
 		return name.endsWith(".class");
 	}
 
-	private boolean isJarFile(String name) {
+	private boolean isJarFile(final String name) {
 		return name.endsWith(".jar");
 	}
 
-	public static String getRootPath(URL url) {
-		String fileUrl = url.getFile();
+	public static String getRootPath(final URL url) {
+		final String fileUrl = url.getFile();
 		int pos = fileUrl.indexOf('!');
 
 		return -1 == pos ? fileUrl : fileUrl.substring(5, pos);
 	}
 
-	public static String dotToSplash(String name) {
+	public static String dotToSplash(final String name) {
 		return name.replaceAll("\\.", "/");
 	}
 
-	public static String splashToDot(String name) {
+	public static String splashToDot(final String name) {
 		return trimExtension(name).replaceAll("/", "\\.");
 	}
 
-	public static String trimExtension(String name) {
-		int pos = name.indexOf('.');
+	public static String trimExtension(final String name) {
+		final int pos = name.indexOf('.');
 		return -1 == pos ? name : name.substring(0, pos);
 	}
 }
