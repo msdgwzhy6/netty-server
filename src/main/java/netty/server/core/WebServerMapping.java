@@ -30,8 +30,7 @@ class WebServerMapping {
 
 		final MethodInfo methodInfo = cm.getMethodInfo();
 		final CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
-		final LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute
-				.getAttribute(LocalVariableAttribute.tag);
+		final LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
 
 		names = new String[method.getParameterTypes().length];
 

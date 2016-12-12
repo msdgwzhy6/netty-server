@@ -28,7 +28,7 @@ class WebServerUtil {
 	private static final int HTTP_CACHE_SECONDS = 60;
 
 	private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
-	private static final SimpleDateFormat FMT = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.CHINA);
+	public static final SimpleDateFormat FMT = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.CHINA);
 
 	public static String sanitizeUri(String uri) {
 		try {

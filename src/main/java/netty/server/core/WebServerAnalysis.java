@@ -16,9 +16,6 @@ import java.util.*;
 class WebServerAnalysis {
 
 	static boolean analysis(final ChannelHandlerContext ctx, final FullHttpRequest request) throws Exception {
-		final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
-		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
-
 		// 解析uri
 		final QueryStringDecoder decoder = new QueryStringDecoder(request.uri());
 		final Map<String, List<String>> query_param = decoder.parameters();
@@ -36,23 +33,24 @@ class WebServerAnalysis {
 		final List<File> fileCache = new ArrayList<File>();
 		final List<String> pathCache = new ArrayList<String>();
 		
+		// 遍历入参
 		for (int i = 0; i < params.length; i++) {
 			final String className = params[i].getName();
 			if (className.equals("io.netty.channel.ChannelHandlerContext")) {
-				// 如果参数类型是ChannelHandlerContext
+				// 入参类型是ChannelHandlerContext
 				args[i] = ctx;
 			} else if (className.equals("io.netty.handler.codec.http.FullHttpRequest")
 					|| className.equals("io.netty.handler.codec.http.HttpRequest")
 					|| className.equals("io.netty.handler.codec.http.HttpMessage")
 					|| className.equals("io.netty.handler.codec.http.HttpObject")) {
-				// 如果参数类型是FullHttpRequest
+				// 入参类型是FullHttpRequest
 				args[i] = request;
 			} else if (className.equals("java.lang.String")) {
-				// 如果参数类型是String
+				// 入参类型是String
 				final List<String> list = query_param.get(mapping.names[i]);
 				args[i] = WebServerUtil.listToString(list);
 			} else if (className.equals("java.io.File")) {
-				// 如果参数类型是File
+				// 入参类型是File
 				final File file = WebServerUtil.readFile(ctx, request, mapping.names[i]);
 				if (file != null) {
 					fileCache.add(file);
@@ -60,24 +58,64 @@ class WebServerAnalysis {
 				}
 				args[i] = file;
 			} else {
+				// 入参类型无法解析
 				args[i] = null;
 			}
 		}
 		
 		// 分析出参
 		final Class<?> resultType = mapping.method.getReturnType();
-		final String result;
+		
+		// 用于文件下载
+		final HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, OK);
+		// 用于返回结果
+		final FullHttpResponse fullResponse = new DefaultFullHttpResponse(HTTP_1_1, OK);
+		
+		// 出参类型只需要判断3种即可:文件、void、其他，其他所有类型暂时都转做字符串处理
+		switch (resultType.getName()) {
+		case "java.io.File":
+			// 出参类型是文件
+			final File file = (File) mapping.method.invoke(mapping.clazz.newInstance(), args);
 
-		if (resultType.getName().equals("java.lang.String")) {
-			result = (String) mapping.method.invoke(mapping.clazz.newInstance(), args);
-		} else {
-			result = null;
-		}
+			final RandomAccessFile raf;
+			try {
+				raf = new RandomAccessFile(file, "r");
+			} catch (FileNotFoundException ignore) {
+				WebServerUtil.sendError(ctx, NOT_FOUND);
+				return true;
+			}
 
-		if (result != null) {
-			final ByteBuf buffer = Unpooled.copiedBuffer(result, CharsetUtil.UTF_8);
-			response.content().writeBytes(buffer);
-			buffer.release();
+			final long fileLength = raf.length();
+			
+			HttpUtil.setContentLength(httpResponse, fileLength);
+			WebServerUtil.setContentTypeHeader(httpResponse, file);
+			WebServerUtil.setDateAndCacheHeaders(httpResponse, file);
+
+			if (HttpUtil.isKeepAlive(request))
+				httpResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+
+			ctx.write(httpResponse);
+			ctx.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength), ctx.newProgressivePromise());
+			
+			ChannelFuture lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE);
+
+			if (!HttpUtil.isKeepAlive(request))
+				lastContentFuture.addListener(ChannelFutureListener.CLOSE);
+			break;
+		default:
+			// 出参类型是文件外的其他类型
+			final Object result = mapping.method.invoke(mapping.clazz.newInstance(), args);
+			
+			if (result != null) {
+				final ByteBuf buffer = Unpooled.copiedBuffer(result.toString(), CharsetUtil.UTF_8);
+				fullResponse.content().writeBytes(buffer);
+				buffer.release();
+			}
+		case "void":
+			// 没有出参
+			fullResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+			ctx.writeAndFlush(fullResponse).addListener(ChannelFutureListener.CLOSE);
+			break;
 		}
 		
 		// 如果文件没有被转移，清除文件缓存
@@ -85,7 +123,6 @@ class WebServerAnalysis {
 			if (fileCache.get(i).getPath().equals(pathCache.get(i)))
 				fileCache.get(i).delete();
 		}
-		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 		return true;
 	}
 }
