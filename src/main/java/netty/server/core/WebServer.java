@@ -39,21 +39,28 @@ public final class WebServer {
 	 */
 	static final Map<String, WebServerMapping> POST_WILDCARDS = new HashMap<String, WebServerMapping>();
 
+	/**
+	 * 服务启动，从配置文件读取端口信息，如果配置文件为空，默认80端口
+	 */
 	public static void run() throws Exception {
 		String port = WebServerUtil.getProperties("server.properties", "port");
 		run(port == null ? 80 : Integer.valueOf(port));
 	}
 
+	/**
+	 * 服务启动，入参为端口号
+	 */
 	public static void run(int port) throws Exception {
 		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 
 		try {
-			init();
+			init(); // 初始化指定包下的所有类及子类
 
-			ServerBootstrap b = new ServerBootstrap().group(bossGroup, workerGroup)
-					.channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO))
-					.childHandler(new WebServerInitializer());
+			ServerBootstrap b = new ServerBootstrap()
+				.group(bossGroup, workerGroup)
+				.channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO))
+				.childHandler(new WebServerInitializer());
 
 			Channel ch = b.bind(port).sync().channel();
 
@@ -64,7 +71,11 @@ public final class WebServer {
 		}
 	}
 
+	/**
+	 * 初始化
+	 */
 	private static void init() throws Exception {
+		// 扫描指定包下的所有类及子类
 		WebServerScanner scan = new WebServerScanner(BASE_PACKAGE);
 		List<String> list = scan.getFullyQualifiedClassNameList();
 
@@ -72,21 +83,30 @@ public final class WebServer {
 			Class<?> clazz = scan.forClassName(className);
 			WebUri uri = clazz.getAnnotation(WebUri.class);
 
+			// 如果该类没有@WebUri注解，跳过
 			if (uri == null)
 				continue;
 
-			Method[] methods = clazz.getMethods();
+			// 扫描出该类的所有方法
+			Method[] methods = clazz.getDeclaredMethods();
 
 			for (Method method : methods) {
 				WebUri second = method.getAnnotation(WebUri.class);
 				WebMethod httpMethod = method.getAnnotation(WebMethod.class);
 
+				// 如果该方法没有@WebUri注解，跳过
 				if (second == null)
 					continue;
 
 				System.out.println("加载路径：" + uri.value() + second.value());
+				
+				// 设置为可写
+				method.setAccessible(true);
 
+				// 存入映射实体中
 				WebServerMapping mapping = new WebServerMapping(clazz, method);
+				
+				// 转义为匹配和通配路径
 				String match = uri.value() + second.value();
 				String wildcards = "^" + match.replace("*", ".*") + "$";
 

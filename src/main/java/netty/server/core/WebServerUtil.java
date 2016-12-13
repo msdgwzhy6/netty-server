@@ -28,7 +28,7 @@ class WebServerUtil {
 	private static final int HTTP_CACHE_SECONDS = 60;
 
 	private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
-	public static final SimpleDateFormat FMT = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.CHINA);
+	private static final SimpleDateFormat FMT = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.CHINA);
 
 	public static String sanitizeUri(String uri) {
 		try {
@@ -94,6 +94,12 @@ class WebServerUtil {
 		response.headers().set(HttpHeaderNames.CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
 	}
 	
+	/**
+	 * 读取配置文件
+	 * @param source 配置文件
+	 * @param key
+	 * @return value
+	 */
 	public static String getProperties(String source, String key){
 		try {
 			Properties prop = new Properties();
@@ -121,6 +127,9 @@ class WebServerUtil {
 		return result.toString();
 	}
 	
+	/**
+	 * 读取文件
+	 */
 	public static File readFile(ChannelHandlerContext ctx, HttpRequest request, String fileName) throws Exception {
 		HttpDataFactory factory = new DefaultHttpDataFactory(DefaultHttpDataFactory.MINSIZE);
 		HttpContent chunk = (HttpContent) request;

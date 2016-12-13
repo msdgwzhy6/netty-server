@@ -14,8 +14,19 @@ import javassist.bytecode.*;
  */
 class WebServerMapping {
 
+	/**
+	 * 解析URL对应的类
+	 */
 	final Class<?> clazz;
+	
+	/**
+	 * 解析URL对应的方法
+	 */
 	final Method method;
+	
+	/**
+	 * 该方法的参数名
+	 */
 	final String[] names;
 
 	WebServerMapping(final Class<?> clazz, final Method method) throws Exception {
@@ -41,6 +52,13 @@ class WebServerMapping {
 		}
 	}
 
+	/**
+	 * 根据URL以及提交方式解析出对应的Mapping
+	 * 
+	 * @param request
+	 * @param uri
+	 * @return
+	 */
 	static WebServerMapping get(final HttpRequest request, final String uri) {
 		WebServerMapping mapping = null;
 
@@ -62,6 +80,13 @@ class WebServerMapping {
 		return mapping;
 	}
 	
+	/**
+	 * 通配URL遍历
+	 * 
+	 * @param uri
+	 * @param mapping
+	 * @return
+	 */
 	private static WebServerMapping get(String uri, Map<String, WebServerMapping> mapping) {
 		for (Entry<String, WebServerMapping> item : mapping.entrySet())
 			if (uri.matches(item.getKey()))

@@ -3,17 +3,16 @@ package netty.server.core;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 
-import java.util.regex.*;
-
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 
 /**
- * Http请求统一处理
+ * Http请求统一处理，该类不需要被访问，权限为default
  */
 class WebServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
-	
-	private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");
 
+	/**
+	 * 通道处理，可扩展，目前只解析一层，没有filter
+	 */
 	protected void channelRead0(final ChannelHandlerContext ctx, final FullHttpRequest request) throws Exception {
 		if (!request.decoderResult().isSuccess()) {
 			WebServerUtil.sendError(ctx, BAD_REQUEST);
