@@ -63,7 +63,7 @@ public class Demo {
 		if (!directory.exists())
 			directory.mkdir();
 
-		// 将入参File转移就可以永久保留，否则改方法结束后清除缓存
+		// 将入参File转移(或重命名)就可以永久保留，否则该方法结束后清除缓存
 		File newFile = new File(home + file.getName());
 		file.renameTo(newFile);
 
