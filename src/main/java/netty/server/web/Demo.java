@@ -49,19 +49,21 @@ public class Demo {
 	@WebUri("/upload")
 	@WebMethod(method = POST)
 	String upload(File file) {
+		// 文件不存在，提示"未上传文件"
+		if (file == null)
+			return "未上传文件";
+
 		// 如果文件存储目录不存在，创建该目录
 		File directory = new File(home);
 		if (!directory.exists())
 			directory.mkdir();
 
 		// 将入参File转移(或重命名)就可以永久保留，否则该方法结束后清除缓存
-		if (file != null) {
-			File newFile = new File(home + file.getName());
-			file.renameTo(newFile);
-		}
+		File newFile = new File(home + file.getName());
+		file.renameTo(newFile);
 
-		// 将文件名输出到页面，如果文件不存在，提示"未上传文件"
-		return file == null ? "未上传文件" : file.getName();
+		// 将文件名输出到页面
+		return file.getName();
 	}
 	
 	/**
