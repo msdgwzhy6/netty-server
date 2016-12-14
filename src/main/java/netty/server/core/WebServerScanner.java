@@ -42,9 +42,9 @@ class WebServerScanner {
 				loader = new URLClassLoader(urls);
 
 				return loader.loadClass(name);
-			} else {
-				return Class.forName(name);
 			}
+			
+			return Class.forName(name);
 		} finally {
 			if (loader != null)
 				loader.close();

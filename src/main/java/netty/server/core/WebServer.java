@@ -58,7 +58,8 @@ public final class WebServer {
 
 			ServerBootstrap b = new ServerBootstrap()
 				.group(bossGroup, workerGroup)
-				.channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO))
+				.channel(NioServerSocketChannel.class)
+				.handler(new LoggingHandler(LogLevel.INFO))
 				.childHandler(new WebServerInitializer());
 
 			Channel ch = b.bind(port).sync().channel();

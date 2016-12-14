@@ -56,7 +56,7 @@ public class Demo {
 	 * 
 	 * (@WebMethod注解为HttpMethod.POST时只接收POST请求)
 	 * 
-	 * 入参类型为File，接收对应参数名的文件
+	 * 入参类型为File，接收对应参数名的文件，字符集必须是UTF-8格式，否则文件名不能为中文
 	 * 例如入参对象名为file，接收<input type="file" name="file" />，如果name为file的文件有多个，则接收第一个
 	 */
 	@WebUri("/upload")

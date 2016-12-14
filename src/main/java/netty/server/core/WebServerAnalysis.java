@@ -119,10 +119,10 @@ class WebServerAnalysis {
 		}
 		
 		// 如果文件没有被转移，清除文件缓存
-		for (int i = 0; i < fileCache.size(); i++) {
+		for (int i = 0; i < fileCache.size(); i++)
 			if (fileCache.get(i).getPath().equals(pathCache.get(i)))
 				fileCache.get(i).delete();
-		}
+
 		return true;
 	}
 }
