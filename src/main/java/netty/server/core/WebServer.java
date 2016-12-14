@@ -8,7 +8,6 @@ import io.netty.channel.*;
 import io.netty.channel.nio.*;
 import io.netty.channel.socket.nio.*;
 import io.netty.handler.logging.*;
-
 import netty.server.annotation.*;
 import netty.server.annotation.type.*;
 
