@@ -22,12 +22,12 @@ class WebServerScanner {
 		this.basePackage = basePackage;
 		this.cl = cl;
 	}
-	
+
 	List<String> getFullyQualifiedClassNameList() throws IOException {
-        System.out.println("开始扫描包" + basePackage + "下的所有类");
- 
-        return doScan(basePackage, new ArrayList<String>());
-    }
+		System.out.println("开始扫描包" + basePackage + "下的所有类");
+
+		return doScan(basePackage, new ArrayList<String>());
+	}
 	
 	Class<?> forClassName(final String name) throws Exception {
 		URLClassLoader loader = null;
@@ -43,7 +43,7 @@ class WebServerScanner {
 
 				return loader.loadClass(name);
 			}
-			
+
 			return Class.forName(name);
 		} finally {
 			if (loader != null)
@@ -67,7 +67,7 @@ class WebServerScanner {
 
 			names = readFromDirectory(filePath);
 		}
-		
+
 		for (final String name : names)
 			if (isClassFile(name))
 				nameList.add(isJarFile(filePath) ? splashToDot(name) : toFullyQualifiedName(name, basePackage));
@@ -79,7 +79,7 @@ class WebServerScanner {
 
 		return nameList;
 	}
-	
+
 	String toFullyQualifiedName(final String shortName, final String basePackage) {
 		final StringBuilder sb = new StringBuilder(basePackage);
 		sb.append('.');

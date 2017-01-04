@@ -9,6 +9,9 @@ import javassist.*;
 import javassist.Modifier;
 import javassist.bytecode.*;
 
+import static io.netty.handler.codec.http.HttpMethod.*;
+import static netty.server.core.WebServer.*;
+
 /**
  * URL映射实体
  */
@@ -34,6 +37,7 @@ class WebServerMapping {
 		this.method = method;
 
 		// 使用增强反射工具，还原出参数名，在服务器启动时预处理，可以提升运行时速度
+		// 这里还可以定义成静态来提升速度，由于增强反射后面不会用到，定义成静态不会被GC回收，所以定义到这里就可以了
 		final ClassPool cp = ClassPool.getDefault();
 		cp.insertClassPath(new ClassClassPath(clazz));
 		final CtClass cc = cp.get(clazz.getName());
@@ -62,19 +66,19 @@ class WebServerMapping {
 	static WebServerMapping get(final HttpRequest request, final String uri) {
 		WebServerMapping mapping = null;
 
-		if (request.method() == HttpMethod.GET) {
-			mapping = WebServer.GET_MAPPING.get(uri); // 完全匹配
-		} else if (request.method() == HttpMethod.POST) {
-			mapping = WebServer.POST_MAPPING.get(uri); // 完全匹配
+		if (request.method() == GET) {
+			mapping = GET_MAPPING.get(uri); // 完全匹配
+		} else if (request.method() == POST) {
+			mapping = POST_MAPPING.get(uri); // 完全匹配
 		}
 
 		if (mapping != null)
 			return mapping;
 
-		if (request.method() == HttpMethod.GET) {
-			mapping = get(uri, WebServer.GET_WILDCARDS); // 通配
-		} else if (request.method() == HttpMethod.POST) {
-			mapping = get(uri, WebServer.POST_WILDCARDS); // 通配
+		if (request.method() == GET) {
+			mapping = get(uri, GET_WILDCARDS); // 通配
+		} else if (request.method() == POST) {
+			mapping = get(uri, POST_WILDCARDS); // 通配
 		}
 
 		return mapping;
