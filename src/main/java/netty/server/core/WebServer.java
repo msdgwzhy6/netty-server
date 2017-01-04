@@ -9,7 +9,7 @@ import io.netty.channel.nio.*;
 import io.netty.channel.socket.nio.*;
 import io.netty.handler.logging.*;
 import netty.server.annotation.*;
-import netty.server.annotation.type.*;
+import static netty.server.annotation.type.HttpMethod.*;
 
 /**
  * Web服务启动类
@@ -111,14 +111,14 @@ public final class WebServer {
 				String wildcards = "^" + match.replace("*", ".*") + "$";
 
 				// 为了提升检索速度，在服务器启动时将URL映射存放在4个Map中，此方式消耗内存较大
-				if (httpMethod == null || httpMethod.method() == HttpMethod.GET) {
+				if (httpMethod == null || httpMethod.method() == GET) {
 					if (match.indexOf("*") == -1)
 						GET_MAPPING.put(match, mapping);
 					else
 						GET_WILDCARDS.put(wildcards, mapping);
 				}
 
-				if (httpMethod == null || httpMethod.method() == HttpMethod.POST) {
+				if (httpMethod == null || httpMethod.method() == POST) {
 					if (match.indexOf("*") == -1)
 						POST_MAPPING.put(match, mapping);
 					else
